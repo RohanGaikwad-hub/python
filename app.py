@@ -24,19 +24,28 @@ def login():
 
 @app.route('/register', methods = ['GET','POST'])
 def register():
-    text=""
-    if request.method == 'POST':
+    text = ''
+    if request.method == 'POST' and 'username' in request.form and 'email' in request.form and 'password' in request.form:
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
 
         conn = mysql.connect()
         cur = conn.cursor(pymysql.cursors.DictCursor)
-        cur.execute("INSERT INTO accounts VALUES(NULL, %s, %s, %s)", (username, email, password,))
-        conn.commit()
-        text="added"
+        cur.execute(" SELECT * FROM accounts WHERE username = %s OR email = %s",(username,email,))
+        accounts = cur.fetchone()
 
-    return render_template('register.html')
+        if accounts:
+            text = "Account already exists"
+        else:
+            cur.execute("INSERT INTO accounts VALUES(NULL, %s, %s, %s)", (username, email, password,))
+            conn.commit()
+            text = "You can login now!" 
+            return render_template('index.html',text=text)   
+    elif request.method=='POST':
+        text = "Fill in the forms"
+
+    return render_template('register.html',text=text)
 
 
 if __name__ == '__main__':
